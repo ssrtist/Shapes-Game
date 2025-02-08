@@ -6,60 +6,56 @@ import random
 pygame.init()
 clock = pygame.time.Clock()
 
-color_items = {}
-color_items = {
-    "red": { 
-        "value" : (255, 0, 0),
-        "sound" : pygame.mixer.Sound("assets/red.wav"),
+# Game variables
+min_num_choices = 1 # Maximum number of choices
+max_num_choices = 5 # Maximum number of choices
+num_choices = 2 # Customizable number of choices
+
+shape_items = {}
+shape_items = {
+    "triangle": { 
+        "value" : "triangle",
+        "sound" : pygame.mixer.Sound("assets/triangle.wav"),
+        "toggle" : False
+    },
+    "square": { 
+        "value" : "square",
+        "sound" : pygame.mixer.Sound("assets/square.wav"),
         "toggle" : True
     },
-    "green": { 
-        "value" : (0, 255, 0),
-        "sound" : pygame.mixer.Sound("assets/green.wav"),
+    "circle": { 
+        "value" : "circle",
+        "sound" : pygame.mixer.Sound("assets/circle.wav"),
         "toggle" : True
     },
-    "blue": { 
-        "value" : (0, 0, 255),
-        "sound" : pygame.mixer.Sound("assets/blue.wav"),
-        "toggle" : False
-    },
-    "yellow": { 
-        "value" : (255, 255, 0),
-        "sound" : pygame.mixer.Sound("assets/yellow.wav"),
-        "toggle" : False
-    },
-    "purple": { 
-        "value" : (128, 0, 128),
-        "sound" : pygame.mixer.Sound("assets/purple.wav"),
-        "toggle" : False
-    },
-    # "orange": {
-    #     "value" : (255, 165, 0),
-    #     "sound" : pygame.mixer.Sound("assets/orange.wav"),
-    #     "toggle" : True
+    # "star": { 
+    #     "value" : "star",
+    #     "sound" : pygame.mixer.Sound("assets/star.wav"),
+    #     "toggle" : False
     # },
-    "black": { 
-        "value" : (0, 0, 0),
-        "sound" : pygame.mixer.Sound("assets/black.wav"),
+    "oval": { 
+        "value" : "oval",
+        "sound" : pygame.mixer.Sound("assets/oval.wav"),
         "toggle" : False
     },
-    "white": { 
-        "value" : (255, 255, 255),
-        "sound" : pygame.mixer.Sound("assets/white.wav"),
-        "toggle" : True
-    },
-    "pink": { 
-        "value" : (255, 182, 193),
-        "sound" : pygame.mixer.Sound("assets/pink.wav"),
+    "rectangle": {
+         "value" : "rectangle",
+         "sound" : pygame.mixer.Sound("assets/rectangle.wav"),
+         "toggle" : True
+     },
+    "line": { 
+        "value" : "line",
+        "sound" : pygame.mixer.Sound("assets/line.wav"),
         "toggle" : False
     }
 }
 
-COLOR_NAMES = list(color_items.keys())
+shape_names = list(shape_items.keys())
 
 # Screen dimensions
 WIDTH, HEIGHT = 1024, 768
 screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.FULLSCREEN)
+# screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Color Selection Game")
 
 # Fonts
@@ -84,15 +80,34 @@ sad_face = pygame.image.load("assets/red_sad_face.png")
 happy_face = pygame.transform.scale(happy_face, (200, 200))  
 sad_face = pygame.transform.scale(sad_face, (200, 200))      
 
-# Game variables
-max_num_choices = 5 # Maximum number of choices
-num_choices = 2 # Customizable number of choices
-
 # square_size = 150
 square_size = WIDTH // max_num_choices - 10  # Square size based on max number of choices
 score = 0
 target_score = 10
 game_over = False
+
+# Function to draw shapes from center point
+def draw_shape(center, shape, size):
+    x, y = center
+    border_width = 4
+
+    if shape == "rectangle":
+        myshape = pygame.draw.rect(screen, "cyan", (x - size // 2, y - size // 4, size, size // 2), border_width)
+    elif shape == "circle":
+        myshape = pygame.draw.circle(screen, "cyan", center, size // 2, border_width)
+    elif shape == "triangle":
+        myshape = pygame.draw.polygon(screen, "cyan", [
+            (x, y - size // 2),
+            (x + size // 2, y + size // 2),
+            (x - size // 2, y + size // 2)
+        ], border_width)
+    elif shape == "square":
+        myshape = pygame.draw.rect(screen, "cyan", (x - size // 2, y - size // 2, size, size), border_width)
+    elif shape == "oval":
+        myshape = pygame.draw.ellipse(screen, "cyan", (x - size, y - size // 2, size * 2, size), border_width)
+    elif shape == "line":
+        myshape = pygame.draw.line(screen, "cyan", (x - size // 2, y), (x + size // 2, y), 5)
+    return myshape
 
 def options_screen():
     global num_choices, toggles
@@ -101,12 +116,8 @@ def options_screen():
     opt_rect = {}
     opt_size = 50
     opt_width = 4
-    opt_x = (WIDTH - opt_size * 1.25 * len(COLOR_NAMES)) // 2
+    opt_x = (WIDTH - opt_size * 2 * len(shape_names)) // 2
     opt_y = HEIGHT // 2 + 100
-    i = 0
-    for acolor in COLOR_NAMES:
-        opt_rect[acolor] = pygame.Rect(i * opt_size * 1.25 + opt_x, opt_y, opt_size, opt_size)
-        i += 1
 
     # Event handling for options screen
     waiting = True
@@ -134,13 +145,13 @@ def options_screen():
         screen.blit(minus_button_text, (minus_button_x + 20, minus_button_y + 10))
 
         # Color checkboxes
-        choices_text = button_font.render("Available colors: ", True, "white")
+        choices_text = button_font.render("Available shapes: ", True, "white")
         screen.blit(choices_text, (WIDTH // 2 - choices_text.get_width() // 2, HEIGHT // 2 + 50))
 
         # Draw "OK" button
         button_width, button_height = 200, 50
         quit_button_x = WIDTH // 2 - button_width // 2
-        quit_button_y = HEIGHT // 2 + 50 + 150
+        quit_button_y = HEIGHT // 2 + 50 + 200
         quit_button_rect = pygame.Rect(quit_button_x, quit_button_y, button_width, button_height)
         quit_button_text = button_font.render("OK", True, (255, 255, 255))
         pygame.draw.rect(screen, (0, 128, 0), quit_button_rect)  # Green button
@@ -160,23 +171,28 @@ def options_screen():
                     # Decrease the number of choices
                     click_sound.play()
                     num_choices = max(num_choices - 1, 2)
-                for acolor in COLOR_NAMES:
+                for acolor in shape_names:
                     if opt_rect[acolor].collidepoint(x, y):
                         click_sound.play()
-                        color_items[acolor]["toggle"] = not color_items[acolor]["toggle"]
-                        num_available_colors = sum(1 for item in color_items.values() if item["toggle"])
+                        shape_items[acolor]["toggle"] = not shape_items[acolor]["toggle"]
+                        num_available_colors = sum(1 for item in shape_items.values() if item["toggle"])
                         if num_available_colors < num_choices:
-                            color_items[acolor]["toggle"] = not color_items[acolor]["toggle"]
+                            shape_items[acolor]["toggle"] = not shape_items[acolor]["toggle"]
                 if quit_button_rect.collidepoint(x, y):
                     # Return to the title screen
                     click_sound.play()
                     return
-        # Draw option checkboxes
-        for acolor in COLOR_NAMES:
-            pygame.draw.rect(screen, acolor, opt_rect[acolor], opt_width)
-            if color_items[acolor]["toggle"]:
+
+        # Draw options shapes
+        i = 0
+        for ashape in shape_names:
+            opt_rect[ashape] = pygame.Rect(i * opt_size * 2 + opt_x, opt_y + 60, opt_size, opt_size)
+            pygame.draw.rect(screen, "white", opt_rect[ashape], opt_width)
+            if shape_items[ashape]["toggle"]:
                 # draw smaller box
-                pygame.draw.rect(screen, acolor, opt_rect[acolor].inflate(-4, -4))
+                pygame.draw.rect(screen, "orange", opt_rect[ashape].inflate(-16, -16))
+            draw_shape((i * opt_size * 2 + opt_x + 25, opt_y + 20), ashape, 50)
+            i += 1
 
         pygame.display.flip()
         clock.tick(30)
@@ -238,26 +254,28 @@ def title_screen():
         clock.tick(30)
 # 
 def draw_screen():
-    global correct_color, square_colors, square_positions, result, show_next_button
+    global correct_shape, all_shapes, square_positions, result, show_next_button, all_shape_rects
     screen.fill((128, 128, 128))  # Grey background
 
     # Display the score
     score_text = score_font.render(f"Score: {score}", True, (0, 0, 0))
     screen.blit(score_text, (20, 20))
 
-    # Display the color name to select
-    game_text = font.render(f"Find {correct_color.capitalize()}", True, "black")
+    # Display the title text
+    game_text = font.render(f"Find {correct_shape.capitalize()}", True, "black")
     game_rect = pygame.Rect(WIDTH // 2 - game_text.get_width() // 2 - 2, 50 - 2, game_text.get_width() + 4, game_text.get_height() + 4)
     pygame.draw.rect(screen, "gold", game_rect.inflate(0, 0))
     screen.blit(game_text, (WIDTH // 2 - game_text.get_width() // 2, 50))
-
-    # Draw the squares
+    # Draw title text background
     if result is not None:
         pygame.draw.rect(screen, "brown", (highlight_x - 10, highlight_y - 10, square_size + 20, square_size + 20),5)    
         
     # Draw the squares
+    all_shape_rects = []
     for i, pos in enumerate(square_positions):
-        pygame.draw.rect(screen, color_items[square_colors[i]]["value"], (*pos, square_size, square_size))
+        # pygame.draw.rect(screen, "red", (*pos, square_size, square_size))
+        all_shape_rects += [draw_shape((pos[0] + square_size // 2, pos[1] + square_size // 2), all_shapes[i], square_size)]
+
 
     # Display result
     if result is not None:
@@ -288,7 +306,7 @@ def draw_screen():
         pygame.time.delay(250)  # Delay for 1 second
         title_sound.play()  # Play title sound at the beginning of each round
         pygame.time.delay(500)
-        color_items[correct_color]["sound"].play()  # Play correct color sound at the title screen
+        shape_items[correct_shape]["sound"].play()  # Play correct color sound at the title screen
     return game_rect
 
 # Function to generate square positions dynamically
@@ -307,13 +325,13 @@ def generate_square_positions(num_choices):
 
 # Function to generate squares with only one correct choice
 def generate_squares(num_choices):
-    really_available_colors = [c for c in COLOR_NAMES if color_items[c]["toggle"]]
-    correct_color = random.choice(really_available_colors)
+    really_available_colors = [c for c in shape_names if shape_items[c]["toggle"]]
+    correct_shape = random.choice(really_available_colors)
     # Ensure the correct color is only present once
-    incorrect_colors = random.sample([c for c in really_available_colors if c != correct_color], num_choices - 1)  # Pick incorrect colors
-    square_colors = incorrect_colors + [correct_color]  # Combine incorrect and correct colors
-    random.shuffle(square_colors)  # Shuffle to randomize positions
-    return correct_color, square_colors
+    incorrect_colors = random.sample([c for c in really_available_colors if c != correct_shape], num_choices - 1)  # Pick incorrect colors
+    all_shapes = incorrect_colors + [correct_shape]  # Combine incorrect and correct colors
+    random.shuffle(all_shapes)  # Shuffle to randomize positions
+    return correct_shape, all_shapes
 
 # Button variables
 button_width, button_height = 200, 50
@@ -345,10 +363,11 @@ running = True
 result = None
 show_next_button = False
 highlight_x, highlight_y = 0, 0
+all_shape_rects = []
 
 # Initialize the first question
 square_positions = generate_square_positions(num_choices)
-correct_color, square_colors = generate_squares(num_choices)
+correct_shape, all_shapes = generate_squares(num_choices)
 
 # Clear any lingering events
 pygame.event.clear()  
@@ -384,7 +403,7 @@ while running:
                         result = None
                         score = 0
                         game_over = False
-                        correct_color, square_colors = generate_squares(num_choices)
+                        correct_shape, all_shapes = generate_squares(num_choices)
                         show_next_button = False
                         waiting = False
                     elif exit_game_button_rect.collidepoint(x, y):
@@ -402,25 +421,40 @@ while running:
             running = False
         elif event.type == pygame.MOUSEBUTTONDOWN:
             x, y = event.pos
-            # logic for audio prompt when clicking on the title
-            # if find_color_rect.collidepoint(x, y):
-                # title_sound.play()  # Play title sound at the beginning of each round
             if show_next_button and next_button_rect.collidepoint(x, y):
                 # Proceed to the next round
                 click_sound.play()
                 show_next_button = False
                 result = None
-                correct_color, square_colors = generate_squares(num_choices)
+                correct_shape, all_shapes = generate_squares(num_choices)
                 screen.fill((128, 128, 128))  # Grey background
                 new_screen = True
             elif quit_button_rect.collidepoint(x, y):
                 click_sound.play()
                 running = False  # Quit the game
             elif not show_next_button:
+                # for i, pos in enumerate(all_shape_rects):
+                #     if pos.collidepoint(x, y):
+                #         if all_shapes[i] == correct_shape:
+                #             result = "RIGHT !"
+                #             correct_sound.play()  # Play correct sound effect
+                #             show_next_button = True
+                #             score += 1  # Increase score
+                #             if score >= target_score:
+                #                 game_over = True
+                #             if show_next_button and not game_over:
+                #                 pygame.draw.rect(screen, (0, 128, 0), next_button_rect)  # Green button
+                #                 screen.blit(next_button_text, (next_button_x + 20, next_button_y + 10))
+                #                 pygame.display.flip()
+                #         else:
+                #             result = "WRONG !"
+                #             wrong_sound.play()  # Play wrong sound effect
+                #             show_next_button = False
+                #         break
                 for i, pos in enumerate(square_positions):
                     if pos[0] <= x <= pos[0] + square_size and pos[1] <= y <= pos[1] + square_size:
                         highlight_x, highlight_y = pos
-                        if square_colors[i] == correct_color:
+                        if all_shapes[i] == correct_shape:
                             result = "RIGHT !"
                             correct_sound.play()  # Play correct sound effect
                             show_next_button = True
