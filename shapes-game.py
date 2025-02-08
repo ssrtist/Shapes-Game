@@ -87,26 +87,26 @@ target_score = 10
 game_over = False
 
 # Function to draw shapes from center point
-def draw_shape(center, shape, size):
+def draw_shape(center, shape, size, color="purple"):
     x, y = center
     border_width = 4
 
     if shape == "rectangle":
-        myshape = pygame.draw.rect(screen, "cyan", (x - size // 2, y - size // 4, size, size // 2), border_width)
+        myshape = pygame.draw.rect(screen, color, (x - size // 2, y - size // 4, size, size // 2), border_width)
     elif shape == "circle":
-        myshape = pygame.draw.circle(screen, "cyan", center, size // 2, border_width)
+        myshape = pygame.draw.circle(screen, color, center, size // 2, border_width)
     elif shape == "triangle":
-        myshape = pygame.draw.polygon(screen, "cyan", [
+        myshape = pygame.draw.polygon(screen, color, [
             (x, y - size // 2),
             (x + size // 2, y + size // 2),
             (x - size // 2, y + size // 2)
         ], border_width)
     elif shape == "square":
-        myshape = pygame.draw.rect(screen, "cyan", (x - size // 2, y - size // 2, size, size), border_width)
+        myshape = pygame.draw.rect(screen, color, (x - size // 2, y - size // 2, size, size), border_width)
     elif shape == "oval":
-        myshape = pygame.draw.ellipse(screen, "cyan", (x - size, y - size // 2, size * 2, size), border_width)
+        myshape = pygame.draw.ellipse(screen, color, (x - size, y - size // 2, size * 2, size), border_width)
     elif shape == "line":
-        myshape = pygame.draw.line(screen, "cyan", (x - size // 2, y), (x + size // 2, y), 5)
+        myshape = pygame.draw.line(screen, color, (x - size // 2, y), (x + size // 2, y), 5)
     return myshape
 
 def options_screen():
@@ -191,7 +191,7 @@ def options_screen():
             if shape_items[ashape]["toggle"]:
                 # draw smaller box
                 pygame.draw.rect(screen, "orange", opt_rect[ashape].inflate(-16, -16))
-            draw_shape((i * opt_size * 2 + opt_x + 25, opt_y + 20), ashape, 50)
+            draw_shape((i * opt_size * 2 + opt_x + 25, opt_y + 20), ashape, 50, "cyan")
             i += 1
 
         pygame.display.flip()
@@ -274,7 +274,7 @@ def draw_screen():
     all_shape_rects = []
     for i, pos in enumerate(square_positions):
         # pygame.draw.rect(screen, "red", (*pos, square_size, square_size))
-        all_shape_rects += [draw_shape((pos[0] + square_size // 2, pos[1] + square_size // 2), all_shapes[i], square_size)]
+        all_shape_rects += [draw_shape((pos[0] + square_size // 2, pos[1] + square_size // 2), all_shapes[i], square_size, "blue")]
 
 
     # Display result
